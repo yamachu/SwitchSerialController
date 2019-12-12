@@ -30,7 +30,7 @@ public class SerialController : MonoBehaviour
         inputSubscriber.OnInputChanged.Subscribe(param =>
         {
             Debug.Log(param);
-            Write(new[] { 'a', 'b', 'c' });
+            Write(param.toSwitchSerialByteArray());
         });
 
         readByteSubject.Subscribe(b =>
@@ -83,7 +83,7 @@ public class SerialController : MonoBehaviour
         isRunning = false;
     }
 
-    private void Write(char[] messages)
+    private void Write(byte[] messages)
     {
         try
         {
