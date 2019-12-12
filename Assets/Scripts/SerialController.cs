@@ -1,8 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UniRx;
+﻿using System;
 using System.IO.Ports;
+using System.Linq;
+using UniRx;
+using UnityEngine;
 
 public class SerialController : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class SerialController : MonoBehaviour
     private SerialPort serialPort;
     private bool isRunning = false;
 
-    private Subject<int> readByteSubject = new Subject<int>();
+    private Subject<string> readByteSubject = new Subject<string>();
 
     // Start is called before the first frame update
     void Start()
@@ -29,13 +29,14 @@ public class SerialController : MonoBehaviour
         // Todo: keep 60FPS?
         inputSubscriber.OnInputChanged.Subscribe(param =>
         {
-            Debug.Log(param);
-            Write(param.toSwitchSerialByteArray());
+            Write("start".ToCharArray().Select(c => Convert.ToByte(c)).ToArray());
+            var sendParam = param.toSwitchSerialByteArray();
+            Write(sendParam);
         });
 
         readByteSubject.Subscribe(b =>
         {
-            Debug.LogFormat("Read: :X", b);
+            Debug.LogFormat("Read: {0}", b);
         });
     }
 
@@ -49,6 +50,7 @@ public class SerialController : MonoBehaviour
         serialPort = new SerialPort(PortName, BaudRate, Parity.None, 8, StopBits.One);
         serialPort.ReadTimeout = 20;
         serialPort.Open();
+        serialPort.NewLine = "\r\n";
 
         isRunning = true;
 
@@ -58,7 +60,7 @@ public class SerialController : MonoBehaviour
             {
                 try
                 {
-                    readByteSubject.OnNext(serialPort.ReadByte());
+                    readByteSubject.OnNext(serialPort.ReadLine());
 
                 }
                 catch (System.Exception e)
